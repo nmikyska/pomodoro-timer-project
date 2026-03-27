@@ -8,18 +8,6 @@ let currentMode = 'pomodoro';
 let timeLeft = TIME_MODES[currentMode];
 let timerId = null;
 let isRunning = false;
-
-// DOM Elements
-const minutesEl = document.getElementById('minutes');
-const secondsEl = document.getElementById('seconds');
-const startBtn = document.getElementById('startBtn');
-const resetBtn = document.getElementById('resetBtn');
-const modeBtns = document.querySelectorAll('.mode-btn');
-const timeDisplay = document.querySelector('.time-display');
-const customMinutesInput = document.getElementById('customMinutes');
-const setCustomBtn = document.getElementById('setCustomBtn');
-
-// Audio Context for the alert chime
 let audioCtx = null;
 
 function playChime() {
@@ -61,17 +49,17 @@ function updateDisplay() {
     const min = Math.floor(timeLeft / 60);
     const sec = timeLeft % 60;
     
-    minutesEl.textContent = min.toString().padStart(2, '0');
-    secondsEl.textContent = sec.toString().padStart(2, '0');
+    $('#minutes').text(min.toString().padStart(2, '0'));
+    $('#seconds').text(sec.toString().padStart(2, '0'));
     
     // Document title update for visibility when tab is inactive
-    document.title = `${minutesEl.textContent}:${secondsEl.textContent} - Pomodoro`;
+    document.title = `${$('#minutes').text()}:${$('#seconds').text()} - Pomodoro`;
     
     // Add warning color if less than 1 minute remaining
     if (timeLeft <= 60 && timeLeft > 0) {
-        timeDisplay.classList.add('pulse-warning');
+        $('.time-display').addClass('pulse-warning');
     } else {
-        timeDisplay.classList.remove('pulse-warning');
+        $('.time-display').removeClass('pulse-warning');
     }
 }
 
@@ -87,15 +75,10 @@ function switchMode(mode) {
     timeLeft = TIME_MODES[currentMode];
     
     // Update active button state
-    modeBtns.forEach(btn => {
-        if (btn.dataset.mode === mode) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
+    $('.mode-btn').removeClass('active');
+    $(`.mode-btn[data-mode="${mode}"]`).addClass('active');
 
-    timeDisplay.classList.remove('pulse-warning');
+    $('.time-display').removeClass('pulse-warning');
     updateDisplay();
 }
 
@@ -108,8 +91,8 @@ function startTimer() {
     if (timeLeft === 0) return;
     
     isRunning = true;
-    startBtn.textContent = 'Pause';
-    timeDisplay.classList.remove('paused');
+    $('#startBtn').text('Pause');
+    $('.time-display').removeClass('paused');
     
     const expectedEnd = Date.now() + (timeLeft * 1000);
     
@@ -135,8 +118,8 @@ function startTimer() {
 
 function pauseTimer() {
     isRunning = false;
-    startBtn.textContent = 'Start';
-    timeDisplay.classList.add('paused');
+    $('#startBtn').text('Start');
+    $('.time-display').addClass('paused');
     clearInterval(timerId);
 }
 
@@ -144,51 +127,51 @@ function resetTimer() {
     pauseTimer();
     timeLeft = TIME_MODES[currentMode];
     updateDisplay();
-    timeDisplay.classList.remove('pulse-warning');
+    $('.time-display').removeClass('pulse-warning');
 }
 
-// Event Listeners
-startBtn.addEventListener('click', () => {
-    if (isRunning) {
-        pauseTimer();
-    } else {
-        startTimer();
-    }
-});
-
-resetBtn.addEventListener('click', resetTimer);
-
-modeBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        switchMode(btn.dataset.mode);
+$(document).ready(function() {
+    // Event Listeners
+    $('#startBtn').on('click', () => {
+        if (isRunning) {
+            pauseTimer();
+        } else {
+            startTimer();
+        }
     });
-});
 
-setCustomBtn.addEventListener('click', () => {
-    const mins = parseInt(customMinutesInput.value, 10);
-    if (isNaN(mins) || mins <= 0) {
-        alert('Please enter a valid positive number of minutes.');
-        return;
-    }
-    
-    if (isRunning) {
-        if (!confirm('Timer is running. Are you sure you want to change the time?')) {
+    $('#resetBtn').on('click', resetTimer);
+
+    $('.mode-btn').on('click', function() {
+        switchMode($(this).data('mode'));
+    });
+
+    $('#setCustomBtn').on('click', () => {
+        const mins = parseInt($('#customMinutes').val(), 10);
+        if (isNaN(mins) || mins <= 0) {
+            alert('Please enter a valid positive number of minutes.');
             return;
         }
-        pauseTimer();
-    }
-    
-    currentMode = 'custom';
-    TIME_MODES['custom'] = mins * 60;
-    timeLeft = TIME_MODES['custom'];
-    
-    modeBtns.forEach(btn => btn.classList.remove('active'));
-    
-    timeDisplay.classList.remove('pulse-warning');
-    updateDisplay();
-    customMinutesInput.value = ''; // clear input after setting
-});
+        
+        if (isRunning) {
+            if (!confirm('Timer is running. Are you sure you want to change the time?')) {
+                return;
+            }
+            pauseTimer();
+        }
+        
+        currentMode = 'custom';
+        TIME_MODES['custom'] = mins * 60;
+        timeLeft = TIME_MODES['custom'];
+        
+        $('.mode-btn').removeClass('active');
+        
+        $('.time-display').removeClass('pulse-warning');
+        updateDisplay();
+        $('#customMinutes').val(''); // clear input after setting
+    });
 
-// Initialize display and state
-timeDisplay.classList.add('paused');
-updateDisplay();
+    // Initialize display and state
+    $('.time-display').addClass('paused');
+    updateDisplay();
+});
